@@ -1,23 +1,36 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
+import plotly.express as px
 
 class FinanceDashboard():
     def __init__(self):
         pass
 
     def add(self, get_date, get_amount):
-        with sqlite3.connect("database.db") as connection:
-            conn = connection.cursor()
-            conn.execute("INSERT INTO finance (date, amount) VALUES (?, ?)", (get_date, get_amount))
-            connection.commit()
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO finance (date, amount) VALUES (?, ?)", (get_date, get_amount))
+            conn.commit()
 
     def graph(self):
-        with sqlite3.connect("database.db") as connection:
-            conn = connection.cursor()
-            conn.execute("SELECT amount FROM finance")
-        date = 1
-        amount = 1
+        
+        date_list = []
+        amount_list = []
+
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT date, amount FROM finance")
+            result = cursor.fetchall()
+
+            for row in result:
+                date_list.append(row[0])
+                amount_list.append(row[1])
+
+            figure = px.line(x=date_list, y=amount_list, labels={"x" : "Dates", "y" : "Scores"})
+            st.plotly_chart(figure)
+
+            return figure
     
 
 class Frontend():
@@ -26,7 +39,6 @@ class Frontend():
         self.current_time = datetime.now().strftime("%m-%d %H:%M")
         
     def run_web(self):
-
         st.session_state.dashboard = FinanceDashboard()
 
         st.markdown("<div style='text-align: center;'>"
@@ -40,7 +52,16 @@ class Frontend():
             st.session_state.dashboard.add(self.current_time, money)
             st.success("Successfully Added")
 
+    def show_graph(self):
+        st.session_state.dashboard = FinanceDashboard()
+        graph_clicked = st.button("Show Budget Graph")
+
+        if graph_clicked:
+            st.session_state.dashboard.graph()
+
 if __name__ == "__main__":
     frontend = Frontend()
+    
     frontend.run_web()
+    frontend.show_graph()
 
