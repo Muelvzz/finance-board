@@ -30,6 +30,9 @@ class FinanceDashboard():
             figure = px.line(x=date_list, y=amount_list, labels={"x" : "Dates", "y" : "Scores"})
             st.plotly_chart(figure)
 
+            amount_list = sum(amount_list)
+            st.subheader(f"Total: {amount_list}")
+
             return figure
         
     def delete_amount(self, get_id):
@@ -39,7 +42,6 @@ class FinanceDashboard():
             conn.commit()
 
     def view(self):
-        # col1, col2, col3, col4, col5 = st.columns(5)
 
         with sqlite3.connect("database.db") as conn:
             cursor = conn.cursor()
